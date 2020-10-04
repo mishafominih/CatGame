@@ -8,17 +8,20 @@ public class MovePlayer : MonoBehaviour
     public GameObject Map;
     public float Speed;
     public float SpeedMove;
+    public bool Move = false;
 
     private Camera cam;
     private List<BoxCollider2D> colliders;
     private List<Vector2> path;
     private Vector2 previousPosition;
+    private BoxCollider2D collider2D;
     void Start()
     {
         cam = GameObject.FindGameObjectWithTag("MainCamera").GetComponent<Camera>();
         colliders = Map.GetComponents<BoxCollider2D>().ToList();
         SpeedMove = 1 / SpeedMove;
         previousPosition = transform.position;
+        collider2D = GetComponent<BoxCollider2D>();
     }
 
     // Update is called once per frame
@@ -32,16 +35,22 @@ public class MovePlayer : MonoBehaviour
         }
         if (path != null && path.Count != 0)
         {
+            Move = true;
             var pos = path[0];
             var dX = transform.position.x - (previousPosition.x - pos.x) / SpeedMove;
             var dY = transform.position.y - (previousPosition.y - pos.y) / SpeedMove;
             transform.position = new Vector3(dX, dY, 0);
             if (isTartget(
-                Vector2.Distance(previousPosition, pos) / (SpeedMove + 1), transform.position, pos))
+                Vector2.Distance(previousPosition, pos) / (SpeedMove / 5),
+                transform.position, pos))
             {
-                previousPosition = pos;
+                previousPosition = transform.position;
                 path.RemoveAt(0);
             }
+        }
+        else
+        {
+            Move = false;
         }
     }
 
@@ -85,12 +94,20 @@ public class MovePlayer : MonoBehaviour
 
     private bool IsPosOnCollider(Vector2 pos)
     {
+        var arr = new Vector2[] { pos, pos + (Vector2)collider2D.bounds.extents, pos - (Vector2)collider2D.bounds.extents };
         foreach(var col in colliders)
         {
-            if (col.bounds.Contains(pos))
+            foreach (var a in arr)
             {
-                return true;
+                if (col.bounds.Contains(a))
+                {
+                    return true;
+                }
             }
+            //if (col.bounds.Contains(pos))
+            //{
+            //    return true;
+            //}
         }
         return false;
     }
